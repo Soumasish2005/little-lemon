@@ -1,5 +1,7 @@
 package com.example.littlelemon
 
+import android.content.Context
+import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
@@ -22,16 +24,24 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.content.edit
+import androidx.navigation.NavHostController
+import androidx.navigation.compose.rememberNavController
 import com.example.littlelemon.ui.theme.LittleLemonTheme
 
 @Composable
-fun Onboarding(modifier: Modifier = Modifier) {
+fun Onboarding(
+    navController: NavHostController,
+    modifier: Modifier = Modifier,
+) {
+    val context = LocalContext.current
     var firstName by remember { mutableStateOf("") }
     var lastName by remember { mutableStateOf("") }
     var email by remember { mutableStateOf("") }
@@ -130,7 +140,33 @@ fun Onboarding(modifier: Modifier = Modifier) {
         )
 
         Button(
-            onClick = { },
+            onClick = {
+                if (firstName.isBlank() || lastName.isBlank() || email.isBlank()) {
+                    Toast.makeText(
+                        context,
+                        "Registration unsuccessful. Please enter all data.",
+                        Toast.LENGTH_SHORT,
+                    ).show()
+                } else {
+                    val sharedPreferences = context.getSharedPreferences("LittleLemon", Context.MODE_PRIVATE)
+                    sharedPreferences.edit {
+                        putString("firstName", firstName)
+                        putString("lastName", lastName)
+                        putString("email", email)
+                        putBoolean("user_logged_in", true)
+                    }
+
+                    Toast.makeText(
+                        context,
+                        "Registration successful!",
+                        Toast.LENGTH_SHORT,
+                    ).show()
+
+                    navController.navigate(Home.route) {
+                        popUpTo(Onboarding.route) { inclusive = true }
+                    }
+                }
+            },
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(start = 16.dp, top = 32.dp, end = 16.dp, bottom = 16.dp),
@@ -150,6 +186,6 @@ fun Onboarding(modifier: Modifier = Modifier) {
 @Composable
 fun OnboardingPreview() {
     LittleLemonTheme {
-        Onboarding()
+        Onboarding(navController = rememberNavController())
     }
 }
