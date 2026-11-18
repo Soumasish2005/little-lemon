@@ -35,7 +35,7 @@ interface MenuDao {
     suspend fun isEmpty(): Boolean
 }
 
-@Database(entities = [MenuItemRoom::class], version = 1, exportSchema = false)
+@Database(entities = [MenuItemRoom::class], version = 2, exportSchema = false)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun menuDao(): MenuDao
 
@@ -49,7 +49,9 @@ abstract class AppDatabase : RoomDatabase() {
                     context.applicationContext,
                     AppDatabase::class.java,
                     "database",
-                ).build()
+                )
+                    .fallbackToDestructiveMigration(dropAllTables = true)
+                    .build()
                 INSTANCE = instance
                 instance
             }

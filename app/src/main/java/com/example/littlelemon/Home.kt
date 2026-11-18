@@ -52,22 +52,27 @@ fun Home(
     navController: NavHostController = rememberNavController(),
 ) {
     val context = LocalContext.current
-    val database = AppDatabase.getDatabase(context)
-    val menuItems by database.menuDao().getAll().observeAsState(emptyList())
+    val database = remember { AppDatabase.getDatabase(context) }
+    val menuDao = remember(database) { database.menuDao() }
+    val menuLiveData = remember(menuDao) { menuDao.getAll() }
+    val menuItems by menuLiveData.observeAsState(emptyList())
 
     var searchPhrase by remember { mutableStateOf("") }
     var selectedCategory by remember { mutableStateOf("") }
 
-    var filteredItems = menuItems
-    if (searchPhrase.isNotBlank()) {
-        filteredItems = filteredItems.filter {
-            it.title.contains(searchPhrase, ignoreCase = true)
+    val filteredItems = remember(menuItems, searchPhrase, selectedCategory) {
+        var items = menuItems
+        if (searchPhrase.isNotBlank()) {
+            items = items.filter {
+                it.title.contains(searchPhrase, ignoreCase = true)
+            }
         }
-    }
-    if (selectedCategory.isNotBlank()) {
-        filteredItems = filteredItems.filter {
-            it.category.equals(selectedCategory, ignoreCase = true)
+        if (selectedCategory.isNotBlank()) {
+            items = items.filter {
+                it.category.equals(selectedCategory, ignoreCase = true)
+            }
         }
+        items
     }
 
     Column(
@@ -108,6 +113,7 @@ fun Home(
         )
 
         OrderForDelivery(
+            menuItems = menuItems,
             selectedCategory = selectedCategory,
             onCategorySelected = { selectedCategory = it },
         )
@@ -189,9 +195,17 @@ fun HeroSection(
 
 @Composable
 fun OrderForDelivery(
+    menuItems: List<MenuItemRoom>,
     selectedCategory: String,
     onCategorySelected: (String) -> Unit,
 ) {
+    val categories = remember(menuItems) {
+        menuItems
+            .map { it.category.replaceFirstChar { char -> char.uppercase() } }
+            .distinct()
+            .ifEmpty { listOf("Starters", "Mains", "Desserts", "Drinks") }
+    }
+
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -209,7 +223,6 @@ fun OrderForDelivery(
                 .padding(vertical = 12.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
         ) {
-            val categories = listOf("Starters", "Mains", "Desserts", "Drinks")
             for (category in categories) {
                 val isSelected = selectedCategory.equals(category, ignoreCase = true)
                 Button(
