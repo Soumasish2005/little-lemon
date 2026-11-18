@@ -3,6 +3,7 @@ package com.example.littlelemon
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -13,6 +14,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -21,6 +23,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
@@ -37,6 +40,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -93,14 +97,16 @@ fun Home(
                 Image(
                     painter = painterResource(id = R.drawable.logo),
                     contentDescription = "Little Lemon Logo",
-                    modifier = Modifier.height(40.dp),
+                    modifier = Modifier.height(50.dp),
                 )
             }
             Image(
                 painter = painterResource(id = R.drawable.profile),
                 contentDescription = "Profile Avatar",
+                contentScale = ContentScale.Crop,
                 modifier = Modifier
-                    .size(40.dp)
+                    .size(50.dp)
+                    .clip(CircleShape)
                     .clickable {
                         navController.navigate(Profile.route)
                     },
@@ -171,15 +177,19 @@ fun HeroSection(
         TextField(
             value = searchPhrase,
             onValueChange = onSearchPhraseChange,
-            placeholder = { Text("Enter search phrase") },
+            placeholder = { Text("Enter search phrase", color = Color.Gray) },
+            textStyle = TextStyle(color = Color.Black),
             leadingIcon = {
                 Icon(
                     imageVector = Icons.Default.Search,
                     contentDescription = "Search Icon",
+                    tint = Color(0xFF495E57),
                 )
             },
             singleLine = true,
             colors = TextFieldDefaults.colors(
+                focusedTextColor = Color.Black,
+                unfocusedTextColor = Color.Black,
                 focusedContainerColor = Color(0xFFEAEAEA),
                 unfocusedContainerColor = Color(0xFFEAEAEA),
                 focusedIndicatorColor = Color.Transparent,
@@ -205,6 +215,7 @@ fun OrderForDelivery(
             .distinct()
             .ifEmpty { listOf("Starters", "Mains", "Desserts", "Drinks") }
     }
+    val isDark = isSystemInDarkTheme()
 
     Column(
         modifier = Modifier
@@ -215,7 +226,7 @@ fun OrderForDelivery(
             text = "ORDER FOR DELIVERY!",
             fontSize = 18.sp,
             fontWeight = FontWeight.ExtraBold,
-            color = Color(0xFF333333),
+            color = if (isDark) Color.White else Color(0xFF333333),
         )
         Row(
             modifier = Modifier
@@ -270,6 +281,15 @@ fun MenuItems(items: List<MenuItemRoom>) {
 @OptIn(ExperimentalGlideComposeApi::class)
 @Composable
 fun MenuItem(item: MenuItemRoom) {
+    val localDrawableRes = when {
+        item.title.contains("Greek", ignoreCase = true) -> R.drawable.greek_salad
+        item.title.contains("Bruschetta", ignoreCase = true) -> R.drawable.bruschetta
+        item.title.contains("Fish", ignoreCase = true) -> R.drawable.grilled_fish
+        item.title.contains("Pasta", ignoreCase = true) -> R.drawable.pasta
+        item.title.contains("Lemon", ignoreCase = true) -> R.drawable.lemon_dessert
+        else -> null
+    }
+
     Row(
         modifier = Modifier.fillMaxWidth(),
         verticalAlignment = Alignment.CenterVertically,
@@ -283,6 +303,7 @@ fun MenuItem(item: MenuItemRoom) {
                 text = item.title,
                 fontSize = 18.sp,
                 fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onBackground,
             )
             Text(
                 text = item.description,
@@ -298,7 +319,7 @@ fun MenuItem(item: MenuItemRoom) {
             )
         }
         GlideImage(
-            model = item.image,
+            model = localDrawableRes ?: item.image,
             contentDescription = item.title,
             contentScale = ContentScale.Crop,
             modifier = Modifier
