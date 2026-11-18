@@ -47,11 +47,9 @@ class MainActivity : ComponentActivity() {
         return response.menu
     }
 
-    private fun saveMenuToDatabase(menuItemsNetwork: List<MenuItemNetwork>) {
+    private suspend fun saveMenuToDatabase(menuItemsNetwork: List<MenuItemNetwork>) {
         val menuItemsRoom = menuItemsNetwork.map { it.toMenuItemRoom() }
-        lifecycleScope.launch(Dispatchers.IO) {
-            database.menuDao().insertAll(menuItemsRoom)
-        }
+        database.menuDao().insertAll(menuItemsRoom)
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -95,6 +93,11 @@ class MainActivity : ComponentActivity() {
                 }
             }
         }
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        httpClient.close()
     }
 }
 

@@ -13,10 +13,10 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Button
@@ -79,52 +79,65 @@ fun Home(
         items
     }
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .verticalScroll(rememberScrollState()),
+    LazyColumn(
+        modifier = Modifier.fillMaxSize(),
     ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 12.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Box(
-                modifier = Modifier.weight(1f),
-                contentAlignment = Alignment.Center,
+        item {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 12.dp),
+                verticalAlignment = Alignment.CenterVertically,
             ) {
+                Box(
+                    modifier = Modifier.weight(1f),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Image(
+                        painter = painterResource(id = R.drawable.logo),
+                        contentDescription = "Little Lemon Logo",
+                        modifier = Modifier.height(50.dp),
+                    )
+                }
                 Image(
-                    painter = painterResource(id = R.drawable.logo),
-                    contentDescription = "Little Lemon Logo",
-                    modifier = Modifier.height(50.dp),
+                    painter = painterResource(id = R.drawable.profile),
+                    contentDescription = "Profile Avatar",
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier
+                        .size(50.dp)
+                        .clip(CircleShape)
+                        .clickable {
+                            navController.navigate(Profile.route)
+                        },
                 )
             }
-            Image(
-                painter = painterResource(id = R.drawable.profile),
-                contentDescription = "Profile Avatar",
-                contentScale = ContentScale.Crop,
-                modifier = Modifier
-                    .size(50.dp)
-                    .clip(CircleShape)
-                    .clickable {
-                        navController.navigate(Profile.route)
-                    },
+        }
+
+        item {
+            HeroSection(
+                searchPhrase = searchPhrase,
+                onSearchPhraseChange = { searchPhrase = it },
             )
         }
 
-        HeroSection(
-            searchPhrase = searchPhrase,
-            onSearchPhraseChange = { searchPhrase = it },
-        )
+        item {
+            OrderForDelivery(
+                menuItems = menuItems,
+                selectedCategory = selectedCategory,
+                onCategorySelected = { selectedCategory = it },
+            )
+        }
 
-        OrderForDelivery(
-            menuItems = menuItems,
-            selectedCategory = selectedCategory,
-            onCategorySelected = { selectedCategory = it },
-        )
-
-        MenuItems(items = filteredItems)
+        items(
+            items = filteredItems,
+            key = { it.id },
+        ) { item ->
+            MenuItem(item = item)
+            HorizontalDivider(
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+                color = Color.LightGray,
+            )
+        }
     }
 }
 
@@ -261,37 +274,24 @@ fun OrderForDelivery(
     }
 }
 
-@Composable
-fun MenuItems(items: List<MenuItemRoom>) {
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(16.dp),
-    ) {
-        for (item in items) {
-            MenuItem(item = item)
-            HorizontalDivider(
-                modifier = Modifier.padding(vertical = 12.dp),
-                color = Color.LightGray,
-            )
-        }
-    }
-}
-
 @OptIn(ExperimentalGlideComposeApi::class)
 @Composable
 fun MenuItem(item: MenuItemRoom) {
-    val localDrawableRes = when {
-        item.title.contains("Greek", ignoreCase = true) -> R.drawable.greek_salad
-        item.title.contains("Bruschetta", ignoreCase = true) -> R.drawable.bruschetta
-        item.title.contains("Fish", ignoreCase = true) -> R.drawable.grilled_fish
-        item.title.contains("Pasta", ignoreCase = true) -> R.drawable.pasta
-        item.title.contains("Lemon", ignoreCase = true) -> R.drawable.lemon_dessert
-        else -> null
+    val localDrawableRes = remember(item.title) {
+        when {
+            item.title.contains("Greek", ignoreCase = true) -> R.drawable.greek_salad
+            item.title.contains("Bruschetta", ignoreCase = true) -> R.drawable.bruschetta
+            item.title.contains("Fish", ignoreCase = true) -> R.drawable.grilled_fish
+            item.title.contains("Pasta", ignoreCase = true) -> R.drawable.pasta
+            item.title.contains("Lemon", ignoreCase = true) -> R.drawable.lemon_dessert
+            else -> null
+        }
     }
 
     Row(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 8.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Column(
@@ -318,14 +318,25 @@ fun MenuItem(item: MenuItemRoom) {
                 color = Color(0xFF495E57),
             )
         }
-        GlideImage(
-            model = localDrawableRes ?: item.image,
-            contentDescription = item.title,
-            contentScale = ContentScale.Crop,
-            modifier = Modifier
-                .size(80.dp)
-                .clip(RoundedCornerShape(8.dp)),
-        )
+        if (localDrawableRes != null) {
+            Image(
+                painter = painterResource(id = localDrawableRes),
+                contentDescription = item.title,
+                contentScale = ContentScale.Crop,
+                modifier = Modifier
+                    .size(80.dp)
+                    .clip(RoundedCornerShape(8.dp)),
+            )
+        } else {
+            GlideImage(
+                model = item.image,
+                contentDescription = item.title,
+                contentScale = ContentScale.Crop,
+                modifier = Modifier
+                    .size(80.dp)
+                    .clip(RoundedCornerShape(8.dp)),
+            )
+        }
     }
 }
 
